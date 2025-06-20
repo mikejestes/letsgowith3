@@ -25,7 +25,15 @@ export default function PokerRoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const [searchParams] = useSearchParams();
   const userName = searchParams.get('name') || `User_${Math.random().toString(36).substr(2, 8)}`;
-  const userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  // Generate consistent userId based on session or use a persistent one
+  const userId = useState(() => {
+    const stored = sessionStorage.getItem(`pokervibes_userId_${roomId}`);
+    if (stored) return stored;
+    const newId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionStorage.setItem(`pokervibes_userId_${roomId}`, newId);
+    return newId;
+  })[0];
 
   const [storyModalOpen, setStoryModalOpen] = useState(false);
   const [newStoryTitle, setNewStoryTitle] = useState('');
