@@ -52,12 +52,24 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
       setIsConnected(event.connected);
     });
 
+    webrtcProvider.on('peers', (event: { added: string[], removed: string[], webrtcPeers: string[], bcPeers: string[] }) => {
+      if (event.added.length > 0 || event.removed.length > 0) {
+        console.log(`Peers updated: ${event.webrtcPeers.length + event.bcPeers.length} total`);
+      }
+    });
+
+    // Set user info in awareness
+    webrtcProvider.awareness.setLocalStateField('user', {
+      id: userId,
+      name: userName
+    });
+
     setProvider(webrtcProvider);
 
     return () => {
       webrtcProvider.destroy();
     };
-  }, [roomId, doc]);
+  }, [roomId, doc, userId, userName]);
 
   // Initialize user and room state
   useEffect(() => {
@@ -65,38 +77,46 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
     
     initRef.current = true;
 
-    // Add current user
-    const currentUser: User = {
-      id: userId,
-      name: userName,
-      isOnline: true,
-      isLeader: false,
-      joinedAt: Date.now()
-    };
+    // Wait a bit for initial sync
+    const timer = setTimeout(() => {
+      const usersMap = doc.getMap('users');
+      const metaMap = doc.getMap('meta');
+      
+      // Add current user
+      const currentUser: User = {
+        id: userId,
+        name: userName,
+        isOnline: true,
+        isLeader: false,
+        joinedAt: Date.now()
+      };
 
-    // Check if this is the first user (becomes leader)
-    if (users.size === 0) {
-      currentUser.isLeader = true;
-      meta.set('leaderId', userId);
-    }
+      // Check if this is the first user (becomes leader)
+      if (usersMap.size === 0) {
+        currentUser.isLeader = true;
+        metaMap.set('leaderId', userId);
+      }
 
-    users.set(userId, currentUser);
+      usersMap.set(userId, currentUser);
+    }, 100);
 
     // Set up cleanup on page unload
     const handleBeforeUnload = () => {
-      if (users.has(userId)) {
-        const user = users.get(userId)!;
-        users.set(userId, { ...user, isOnline: false });
+      const usersMap = doc.getMap('users');
+      if (usersMap.has(userId)) {
+        const user = usersMap.get(userId)!;
+        usersMap.set(userId, { ...user, isOnline: false });
       }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('beforeunload', handleBeforeUnload);
       handleBeforeUnload();
     };
-  }, [provider, userId, userName, users, meta]);
+  }, [provider, userId, userName, doc]);
 
   // Helper functions
   const createStory = (title: string, description?: string) => {
