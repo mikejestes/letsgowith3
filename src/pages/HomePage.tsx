@@ -13,7 +13,7 @@ import {
   TextInput,
   Modal,
 } from '@mantine/core';
-import { IconCards, IconUsers, IconChartBar } from '@tabler/icons-react';
+import { Spade, Users, BarChart3 } from 'lucide-react';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ export default function HomePage() {
           <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg">
             <Card shadow="md" padding="lg" radius="md" withBorder>
               <Stack align="center" gap="md">
-                <IconCards size={48} color="blue" />
+                <Spade size={48} color="blue" />
                 <Title order={3}>Estimate Stories</Title>
                 <Text size="sm" c="dimmed" ta="center">
                   Collaboratively estimate user stories with your team
@@ -64,7 +64,7 @@ export default function HomePage() {
 
             <Card shadow="md" padding="lg" radius="md" withBorder>
               <Stack align="center" gap="md">
-                <IconUsers size={48} color="green" />
+                <Users size={48} color="green" />
                 <Title order={3}>Team Collaboration</Title>
                 <Text size="sm" c="dimmed" ta="center">
                   Remote-friendly estimation sessions
@@ -77,7 +77,7 @@ export default function HomePage() {
 
             <Card shadow="md" padding="lg" radius="md" withBorder>
               <Stack align="center" gap="md">
-                <IconChartBar size={48} color="orange" />
+                <BarChart3 size={48} color="orange" />
                 <Title order={3}>Consensus Building</Title>
                 <Text size="sm" c="dimmed" ta="center">
                   Blind voting prevents anchoring bias

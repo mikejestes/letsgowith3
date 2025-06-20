@@ -17,7 +17,7 @@ import {
   Modal,
   Textarea
 } from '@mantine/core';
-import { IconUsers, IconWifi, IconWifiOff, IconCrown, IconEye, IconEyeOff } from '@tabler/icons-react';
+import { Users, Wifi, WifiOff, Crown, Eye, EyeOff } from 'lucide-react';
 import { usePokerRoom } from '../hooks/usePokerRoom';
 import { VOTING_VALUES } from '../types/poker';
 
@@ -87,13 +87,13 @@ export default function PokerRoomPage() {
               <Badge 
                 color={isConnected ? 'green' : 'red'} 
                 variant="light"
-                leftSection={isConnected ? <IconWifi size={14} /> : <IconWifiOff size={14} />}
+                leftSection={isConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
               >
                 {isConnected ? 'Connected' : 'Disconnected'}
               </Badge>
             </Group>
             <Group>
-              <IconUsers size={20} />
+              <Users size={20} />
               <Text size="sm">{onlineUsers.length} online</Text>
             </Group>
           </Group>
@@ -111,7 +111,7 @@ export default function PokerRoomPage() {
                 {onlineUsers.map(user => (
                   <Group key={user.id} justify="space-between">
                     <Text size="sm">{user.name}</Text>
-                    {user.isLeader && <IconCrown size={16} color="gold" />}
+                    {user.isLeader && <Crown size={16} color="gold" />}
                   </Group>
                 ))}
               </Stack>
@@ -236,7 +236,7 @@ export default function PokerRoomPage() {
                     <Group gap="md">
                       {canRevealVotes && (
                         <Button 
-                          leftSection={<IconEye size={16} />}
+                          leftSection={<Eye size={16} />}
                           onClick={revealVotes}
                         >
                           Reveal Votes
@@ -245,7 +245,7 @@ export default function PokerRoomPage() {
                       {canEndRound && (
                         <Button 
                           color="red"
-                          leftSection={<IconEyeOff size={16} />}
+                          leftSection={<EyeOff size={16} />}
                           onClick={endRound}
                         >
                           End Round
