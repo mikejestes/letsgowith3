@@ -10,4 +10,15 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          mantine: ['@mantine/core', '@mantine/hooks', '@mantine/notifications'],
+          yjs: ['yjs', 'y-webrtc', '@joebobmiles/y-react'],
+        },
+      },
+    },
+  },
 });
