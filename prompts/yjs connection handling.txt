@@ -1,0 +1,9 @@
+Let's build out a new route to handle the pointing poker room. We will be using y js, y-webrtc and @joebobmiles/y-react packages to handle peer to peer connects and data. The poker room should have the following features:
+
+* Leader Selection: First user becomes leader, with automatic migration possible
+* State Synchronization: All state changes propagate automatically via Yjs
+* Voting Privacy: Votes are hidden until leader reveals them
+* Round Management: Completed rounds are archived, new rounds reset the voting state
+* User Management: Online/offline status tracked automatically
+
+Lets start with a react page to handle this, with a focus on the data schema and y-react connection management and very simple buttons.

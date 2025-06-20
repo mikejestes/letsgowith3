@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Title,
@@ -8,10 +10,30 @@ import {
   Group,
   Center,
   Stack,
+  TextInput,
+  Modal,
 } from '@mantine/core';
 import { IconCards, IconUsers, IconChartBar } from '@tabler/icons-react';
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [roomId, setRoomId] = useState('');
+
+  const handleCreateRoom = () => {
+    if (userName.trim()) {
+      const newRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      navigate(`/room/${newRoomId}?name=${encodeURIComponent(userName.trim())}`);
+    }
+  };
+
+  const handleJoinRoom = () => {
+    if (userName.trim() && roomId.trim()) {
+      navigate(`/room/${roomId.trim()}?name=${encodeURIComponent(userName.trim())}`);
+    }
+  };
   return (
     <Container size="lg" py="xl">
       <Center>
@@ -68,10 +90,10 @@ export default function HomePage() {
           </SimpleGrid>
 
           <Group gap="md">
-            <Button size="lg" variant="filled">
+            <Button size="lg" variant="filled" onClick={() => setCreateModalOpen(true)}>
               Start a Session
             </Button>
-            <Button size="lg" variant="outline">
+            <Button size="lg" variant="outline" onClick={() => setJoinModalOpen(true)}>
               Join a Session
             </Button>
           </Group>
@@ -94,6 +116,63 @@ export default function HomePage() {
           </Card>
         </Stack>
       </Center>
+
+      {/* Create Room Modal */}
+      <Modal
+        opened={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Start a New Session"
+      >
+        <Stack gap="md">
+          <TextInput
+            label="Your Name"
+            placeholder="Enter your name"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            required
+          />
+          <Group justify="flex-end">
+            <Button variant="outline" onClick={() => setCreateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateRoom} disabled={!userName.trim()}>
+              Create Room
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* Join Room Modal */}
+      <Modal
+        opened={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        title="Join a Session"
+      >
+        <Stack gap="md">
+          <TextInput
+            label="Your Name"
+            placeholder="Enter your name"
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
+            required
+          />
+          <TextInput
+            label="Room ID"
+            placeholder="Enter room ID"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value)}
+            required
+          />
+          <Group justify="flex-end">
+            <Button variant="outline" onClick={() => setJoinModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleJoinRoom} disabled={!userName.trim() || !roomId.trim()}>
+              Join Room
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 }
