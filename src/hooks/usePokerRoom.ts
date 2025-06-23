@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
-import { User, Vote, Story, Round } from '../types/poker';
+import { User, Vote, Round } from '../types/poker';
 
 // Custom hook to observe Y.Map changes
 function useYMap<T>(yMap: Y.Map<T>) {
@@ -34,12 +34,17 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
 
   // Y.js Maps
   const users = useYMap<User>(doc.getMap('users'));
-  const stories = useYMap<Story>(doc.getMap('stories'));
   const rounds = useYMap<Round>(doc.getMap('rounds'));
   const votes = useYMap<Vote>(doc.getMap('votes'));
   const meta = useYMap<string | null>(doc.getMap('meta'));
 
-  // Initialize WebRTC provider
+  // Direct Yjs maps for mutation
+  const usersMap = doc.getMap<User>('users');
+  const roundsMap = doc.getMap<Round>('rounds');
+  const votesMap = doc.getMap<Vote>('votes');
+  const metaMap = doc.getMap<string | null>('meta');
+
+  // Awareness: track online users and leader consistently
   useEffect(() => {
     const webrtcProvider = new WebrtcProvider(roomId, doc, {
       signaling: ['ws://localhost:4444'],
@@ -52,63 +57,91 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
       setIsConnected(event.connected);
     });
 
-    webrtcProvider.on('peers', (event: { added: string[], removed: string[], webrtcPeers: string[], bcPeers: string[] }) => {
-      if (event.added.length > 0 || event.removed.length > 0) {
-        console.log(`Peers updated: ${event.webrtcPeers.length + event.bcPeers.length} total`);
-      }
-    });
+    setProvider(webrtcProvider);
 
-    // Set user info in awareness
+    // Set local awareness state
     webrtcProvider.awareness.setLocalStateField('user', {
       id: userId,
       name: userName
     });
 
-    setProvider(webrtcProvider);
+    // Listen for awareness changes to update online status
+    const handleAwarenessChange = () => {
+      const usersMap = doc.getMap('users');
+      // Awareness states are Record<string, { user: User }>
+      const states = Array.from(webrtcProvider.awareness.getStates().values()) as Array<{ user?: User }>;
+      const onlineIds = new Set(states.map((s) => s.user?.id).filter((id): id is string => Boolean(id)));
+      usersMap.forEach((user, id) => {
+        const typedUser = user as User;
+        if (onlineIds.has(id)) {
+          if (!typedUser.isOnline) usersMap.set(id, { ...typedUser, isOnline: true });
+        } else {
+          if (typedUser.isOnline) usersMap.set(id, { ...typedUser, isOnline: false });
+        }
+      });
+    };
+    webrtcProvider.awareness.on('change', handleAwarenessChange);
 
+    // Clean up
     return () => {
+      webrtcProvider.awareness.off('change', handleAwarenessChange);
       webrtcProvider.destroy();
     };
   }, [roomId, doc, userId, userName]);
 
-  // Initialize user and room state
+  // Initialize user and leader (deterministic leader election)
   useEffect(() => {
     if (!provider || initRef.current) return;
-    
     initRef.current = true;
 
     // Wait a bit for initial sync
     const timer = setTimeout(() => {
       const usersMap = doc.getMap('users');
       const metaMap = doc.getMap('meta');
-      
-      // Add current user
-      const currentUser: User = {
-        id: userId,
-        name: userName,
-        isOnline: true,
-        isLeader: false,
-        joinedAt: Date.now()
-      };
 
-      // Check if this is the first user (becomes leader)
-      if (usersMap.size === 0) {
-        currentUser.isLeader = true;
-        metaMap.set('leaderId', userId);
+      // Add current user if not present
+      let currentUser = usersMap.get(userId) as User | undefined;
+      if (!currentUser) {
+        currentUser = {
+          id: userId,
+          name: userName,
+          isOnline: true,
+          isLeader: false,
+          joinedAt: Date.now()
+        };
+        usersMap.set(userId, currentUser);
+      } else {
+        usersMap.set(userId, { ...currentUser, isOnline: true, name: userName });
       }
 
-      usersMap.set(userId, currentUser);
-    }, 100);
+      // Leader election: always assign leader to the user with the lowest joinedAt (or userId as tiebreaker)
+      const allUsers = Array.from(usersMap.values()).map(u => u as User);
+      let leader = allUsers
+        .filter(u => u.isOnline)
+        .sort((a, b) => (a.joinedAt - b.joinedAt) || a.id.localeCompare(b.id))[0];
+      if (!leader && allUsers.length > 0) {
+        leader = allUsers.sort((a, b) => (a.joinedAt - b.joinedAt) || a.id.localeCompare(b.id))[0];
+      }
+      if (leader) {
+        metaMap.set('leaderId', leader.id);
+        // Update all users' isLeader field
+        usersMap.forEach((user, id) => {
+          const typedUser = user as User;
+          if (typedUser.isLeader !== (id === leader.id)) {
+            usersMap.set(id, { ...typedUser, isLeader: id === leader.id });
+          }
+        });
+      }
+    }, 200);
 
     // Set up cleanup on page unload
     const handleBeforeUnload = () => {
       const usersMap = doc.getMap('users');
       if (usersMap.has(userId)) {
-        const user = usersMap.get(userId)!;
+        const user = usersMap.get(userId) as User;
         usersMap.set(userId, { ...user, isOnline: false });
       }
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
@@ -119,27 +152,15 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
   }, [provider, userId, userName, doc]);
 
   // Helper functions
-  const createStory = (title: string, description?: string) => {
-    const storyId = `story_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const story: Story = {
-      id: storyId,
-      title,
-      description,
-      createdAt: Date.now()
-    };
-    stories.set(storyId, story);
-    return storyId;
-  };
-
-  const startRound = (storyId: string) => {
-    const leaderId = meta.get('leaderId');
+  const startRound = () => {
+    const leaderId = metaMap.get('leaderId');
     if (leaderId !== userId) return; // Only leader can start rounds
 
     // End current round if exists
-    const currentRoundId = meta.get('currentRoundId');
-    if (currentRoundId && rounds.has(currentRoundId)) {
-      const currentRound = rounds.get(currentRoundId)!;
-      rounds.set(currentRoundId, {
+    const currentRoundId = metaMap.get('currentRoundId');
+    if (currentRoundId && roundsMap.has(currentRoundId)) {
+      const currentRound = roundsMap.get(currentRoundId)!;
+      roundsMap.set(currentRoundId, {
         ...currentRound,
         isActive: false,
         completedAt: Date.now()
@@ -150,19 +171,18 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
     const roundId = `round_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const round: Round = {
       id: roundId,
-      storyId,
       isActive: true,
       votesRevealed: false,
       createdAt: Date.now(),
       completedAt: null
     };
 
-    rounds.set(roundId, round);
-    meta.set('currentRoundId', roundId);
+    roundsMap.set(roundId, round);
+    metaMap.set('currentRoundId', roundId);
   };
 
   const castVote = (value: string) => {
-    const currentRoundId = meta.get('currentRoundId');
+    const currentRoundId = metaMap.get('currentRoundId');
     if (!currentRoundId) return;
 
     const voteKey = `${currentRoundId}_${userId}`;
@@ -172,45 +192,44 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
       votedAt: Date.now()
     };
 
-    votes.set(voteKey, vote);
+    votesMap.set(voteKey, vote);
   };
 
   const revealVotes = () => {
-    const leaderId = meta.get('leaderId');
+    const leaderId = metaMap.get('leaderId');
     if (leaderId !== userId) return; // Only leader can reveal votes
 
-    const currentRoundId = meta.get('currentRoundId');
-    if (!currentRoundId || !rounds.has(currentRoundId)) return;
+    const currentRoundId = metaMap.get('currentRoundId');
+    if (!currentRoundId || !roundsMap.has(currentRoundId)) return;
 
-    const round = rounds.get(currentRoundId)!;
-    rounds.set(currentRoundId, {
+    const round = roundsMap.get(currentRoundId)!;
+    roundsMap.set(currentRoundId, {
       ...round,
       votesRevealed: true
     });
   };
 
   const endRound = () => {
-    const leaderId = meta.get('leaderId');
+    const leaderId = metaMap.get('leaderId');
     if (leaderId !== userId) return; // Only leader can end rounds
 
-    const currentRoundId = meta.get('currentRoundId');
-    if (!currentRoundId || !rounds.has(currentRoundId)) return;
+    const currentRoundId = metaMap.get('currentRoundId');
+    if (!currentRoundId || !roundsMap.has(currentRoundId)) return;
 
-    const round = rounds.get(currentRoundId)!;
-    rounds.set(currentRoundId, {
+    const round = roundsMap.get(currentRoundId)!;
+    roundsMap.set(currentRoundId, {
       ...round,
       isActive: false,
       completedAt: Date.now()
     });
 
-    meta.set('currentRoundId', null);
+    metaMap.set('currentRoundId', null);
   };
 
   // Get current round data
   const currentRoundId = meta.get('currentRoundId');
   const currentRound = currentRoundId ? rounds.get(currentRoundId) : null;
-  const currentStory = currentRound ? stories.get(currentRound.storyId) : null;
-  
+
   // Get votes for current round
   const currentRoundVotes = currentRoundId 
     ? Array.from(votes.entries())
@@ -232,12 +251,10 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
     // Room data
     users: Array.from(users.values()),
     onlineUsers,
-    stories: Array.from(stories.values()),
     rounds: Array.from(rounds.values()),
     
     // Current round data
     currentRound,
-    currentStory,
     currentRoundVotes,
     currentUserVote,
     
@@ -245,7 +262,6 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
     isLeader,
     
     // Actions
-    createStory,
     startRound,
     castVote,
     revealVotes,
