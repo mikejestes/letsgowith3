@@ -6,18 +6,15 @@ import {
   Paper,
   Group,
   Button,
-  TextInput,
   Text,
   Badge,
   Stack,
   Grid,
   Card,
   Divider,
-  Alert,
-  Modal,
-  Textarea
+  Alert
 } from '@mantine/core';
-import { Users, Wifi, WifiOff, Crown, Eye, EyeOff } from 'lucide-react';
+import { Users, Wifi, WifiOff, Crown, Eye, EyeOff, Play } from 'lucide-react';
 import { usePokerRoom } from '../hooks/usePokerRoom';
 import { VOTING_VALUES } from '../types/poker';
 
@@ -35,37 +32,21 @@ export default function PokerRoomPage() {
     return newId;
   })[0];
 
-  const [storyModalOpen, setStoryModalOpen] = useState(false);
-  const [newStoryTitle, setNewStoryTitle] = useState('');
-  const [newStoryDescription, setNewStoryDescription] = useState('');
-
   const {
     isConnected,
     onlineUsers,
-    stories,
     currentRound,
-    currentStory,
     currentRoundVotes,
     currentUserVote,
     isLeader,
-    createStory,
     startRound,
     castVote,
     revealVotes,
     endRound
   } = usePokerRoom(roomId || 'default', userId, userName);
 
-  const handleCreateStory = () => {
-    if (newStoryTitle.trim()) {
-      createStory(newStoryTitle.trim(), newStoryDescription.trim() || undefined);
-      setNewStoryTitle('');
-      setNewStoryDescription('');
-      setStoryModalOpen(false);
-    }
-  };
-
-  const handleStartRound = (storyId: string) => {
-    startRound(storyId);
+  const handleStartRound = () => {
+    startRound();
   };
 
   const handleVote = (value: string) => {
@@ -108,7 +89,7 @@ export default function PokerRoomPage() {
         </Paper>
 
         <Grid>
-          {/* Left Column - Users & Stories */}
+          {/* Left Column - Users */}
           <Grid.Col span={4}>
             {/* Online Users */}
             <Card withBorder mb="md">
@@ -124,57 +105,15 @@ export default function PokerRoomPage() {
                 ))}
               </Stack>
             </Card>
-
-            {/* Stories */}
-            <Card withBorder>
-              <Card.Section p="md">
-                <Group justify="space-between">
-                  <Title order={4}>Stories</Title>
-                  {isLeader && (
-                    <Button size="xs" onClick={() => setStoryModalOpen(true)}>
-                      Add Story
-                    </Button>
-                  )}
-                </Group>
-              </Card.Section>
-              <Stack gap="xs">
-                {stories.map(story => (
-                  <Paper key={story.id} p="xs" withBorder>
-                    <Group justify="space-between">
-                      <div>
-                        <Text size="sm" fw={500}>{story.title}</Text>
-                        {story.description && (
-                          <Text size="xs" c="dimmed">{story.description}</Text>
-                        )}
-                      </div>
-                      {isLeader && !currentRound?.isActive && (
-                        <Button 
-                          size="xs" 
-                          variant="light"
-                          onClick={() => handleStartRound(story.id)}
-                        >
-                          Start
-                        </Button>
-                      )}
-                    </Group>
-                  </Paper>
-                ))}
-              </Stack>
-            </Card>
           </Grid.Col>
 
           {/* Right Column - Voting Area */}
           <Grid.Col span={8}>
-            {currentRound && currentStory ? (
+            {currentRound ? (
               <Card withBorder>
                 <Card.Section p="md">
                   <Group justify="space-between">
-                    <div>
-                      <Title order={3}>{currentStory.title}</Title>
-                      {currentStory.description && (
-                        <Text c="dimmed">{currentStory.description}</Text>
-                      )}
-                    </div>
+                    <Title order={3}>Voting Round</Title>
                     <Badge color={currentRound.votesRevealed ? 'blue' : 'gray'}>
                       {currentRound.votesRevealed ? 'Votes Revealed' : 'Voting in Progress'}
                     </Badge>
@@ -282,7 +221,11 @@ export default function PokerRoomPage() {
                 <Card.Section p="md">
                   <Text ta="center" c="dimmed">
                     {isLeader 
-                      ? "Select a story to start voting" 
+                      ? (
+                        <Button leftSection={<Play size={16} />} onClick={handleStartRound}>
+                          Start New Voting Round
+                        </Button>
+                      )
                       : "Waiting for the leader to start a voting round"
                     }
                   </Text>
@@ -292,38 +235,6 @@ export default function PokerRoomPage() {
           </Grid.Col>
         </Grid>
       </Stack>
-
-      {/* Add Story Modal */}
-      <Modal
-        opened={storyModalOpen}
-        onClose={() => setStoryModalOpen(false)}
-        title="Add New Story"
-      >
-        <Stack gap="md">
-          <TextInput
-            label="Story Title"
-            placeholder="As a user, I want to..."
-            value={newStoryTitle}
-            onChange={(e) => setNewStoryTitle(e.target.value)}
-            required
-          />
-          <Textarea
-            label="Description (optional)"
-            placeholder="Additional details about this story..."
-            value={newStoryDescription}
-            onChange={(e) => setNewStoryDescription(e.target.value)}
-            rows={3}
-          />
-          <Group justify="flex-end">
-            <Button variant="outline" onClick={() => setStoryModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateStory} disabled={!newStoryTitle.trim()}>
-              Add Story
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
     </Container>
   );
 }
