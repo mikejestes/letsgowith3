@@ -25,10 +25,10 @@ export default function PokerRoomPage() {
   
   // Generate consistent userId based on session or use a persistent one
   const userId = useState(() => {
-    const stored = sessionStorage.getItem(`pokervibes_userId_${roomId}`);
+    const stored = sessionStorage.getItem(`letsgo3_userId_${roomId}`);
     if (stored) return stored;
     const newId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    sessionStorage.setItem(`pokervibes_userId_${roomId}`, newId);
+    sessionStorage.setItem(`letsgo3_userId_${roomId}`, newId);
     return newId;
   })[0];
 

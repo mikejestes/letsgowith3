@@ -1,6 +1,6 @@
-# PokerVibes 🎭
+# lets go with 3 🎯
 
-A modern team estimation tool built with React, TypeScript, and TanStack Router. Perfect for agile teams doing planning poker sessions remotely.
+the very serious engineers pointing poker app - A modern team estimation tool built with React, TypeScript, and React Router. Perfect for agile teams doing planning poker sessions remotely.
 
 ## ✨ Features
 
@@ -34,7 +34,7 @@ A modern team estimation tool built with React, TypeScript, and TanStack Router.
 
 ```bash
 git clone <repository-url>
-cd pokervibes
+cd lets-go-with-3
 ```
 
 2. Install dependencies

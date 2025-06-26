@@ -5,7 +5,7 @@ test('homepage loads correctly', async ({ page }) => {
 
   // Check that the main heading is visible
   await expect(
-    page.getByRole('heading', { name: '🎭 PokerVibes' })
+    page.getByRole('heading', { name: '� lets go with 3' })
   ).toBeVisible();
 
   // Check that the buttons are present

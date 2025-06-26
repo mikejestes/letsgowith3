@@ -15,7 +15,7 @@ import {
 } from '@mantine/core';
 import { Spade, Users, BarChart3 } from 'lucide-react';
 
-const STORAGE_KEY = 'pokervibes-username';
+const STORAGE_KEY = 'letsgo3-username';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -81,10 +81,10 @@ export default function HomePage() {
         <Stack align="center" gap="xl">
           <div style={{ textAlign: 'center' }}>
             <Title order={1} size={60} mb="md">
-              🎭 PokerVibes
+              � lets go with 3
             </Title>
             <Text size="xl" c="dimmed" mb="xl">
-              Multi-player team estimation tool for agile planning
+              the very serious engineers pointing poker app
             </Text>
           </div>
 
@@ -173,9 +173,9 @@ export default function HomePage() {
 
           <Card shadow="md" padding="xl" radius="md" withBorder mt="xl">
             <Stack align="center" gap="md">
-              <Title order={2}>Welcome to PokerVibes! 🎉</Title>
+              <Title order={2}>Welcome to lets go with 3! 🎉</Title>
               <Text c="dimmed" ta="center">
-                Your agile estimation companion
+                the very serious engineers pointing poker app
               </Text>
               <Text size="sm" c="dimmed" ta="center">
                 Built with React, React Router, and Mantine for a modern,
