@@ -39,7 +39,6 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
   const meta = useYMap<string | null>(doc.getMap('meta'));
 
   // Direct Yjs maps for mutation
-  const usersMap = doc.getMap<User>('users');
   const roundsMap = doc.getMap<Round>('rounds');
   const votesMap = doc.getMap<Vote>('votes');
   const metaMap = doc.getMap<string | null>('meta');
