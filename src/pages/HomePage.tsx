@@ -15,6 +15,7 @@ import {
 } from '@mantine/core';
 import { Spade, Users, BarChart3 } from 'lucide-react';
 import { nameUtils } from '../utils/nameUtils';
+import { generateRoomId } from '../utils/roomNameGenerator';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ export default function HomePage() {
     if (userName.trim()) {
       // Save username to localStorage
       nameUtils.saveName(userName.trim());
-      const newRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      const newRoomId = generateRoomId();
       navigate(`/room/${newRoomId}?name=${encodeURIComponent(userName.trim())}`);
     }
   };
@@ -52,7 +53,7 @@ export default function HomePage() {
     if (userName.trim()) {
       // Save username to localStorage
       nameUtils.saveName(userName.trim());
-      const newRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      const newRoomId = generateRoomId();
       navigate(`/room/${newRoomId}?name=${encodeURIComponent(userName.trim())}`);
     } else {
       setCreateModalOpen(true);
