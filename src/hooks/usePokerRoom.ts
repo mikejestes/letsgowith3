@@ -59,12 +59,6 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
 
     setProvider(webrtcProvider);
 
-    // Set local awareness state
-    webrtcProvider.awareness.setLocalStateField('user', {
-      id: userId,
-      name: userName
-    });
-
     // Listen for awareness changes to update online status
     const handleAwarenessChange = () => {
       const usersMap = doc.getMap('users');
@@ -87,7 +81,7 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
       webrtcProvider.awareness.off('change', handleAwarenessChange);
       webrtcProvider.destroy();
     };
-  }, [roomId, doc, userId, userName]);
+  }, [roomId, doc, userId]);
 
   // Initialize user and leader (deterministic leader election)
   useEffect(() => {
@@ -149,6 +143,24 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       handleBeforeUnload();
     };
+  }, [provider, userId, userName, doc]);
+
+  // Update user name when it changes (without recreating the provider)
+  useEffect(() => {
+    if (!provider || !userName) return;
+
+    // Update awareness state with new name
+    provider.awareness.setLocalStateField('user', {
+      id: userId,
+      name: userName
+    });
+
+    // Update user name in the persistent document
+    const usersMap = doc.getMap('users');
+    const currentUser = usersMap.get(userId) as User | undefined;
+    if (currentUser) {
+      usersMap.set(userId, { ...currentUser, name: userName });
+    }
   }, [provider, userId, userName, doc]);
 
   // Helper functions

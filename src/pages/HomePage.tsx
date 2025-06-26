@@ -14,8 +14,7 @@ import {
   Modal,
 } from '@mantine/core';
 import { Spade, Users, BarChart3 } from 'lucide-react';
-
-const STORAGE_KEY = 'letsgo3-username';
+import { nameUtils } from '../utils/nameUtils';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -26,7 +25,7 @@ export default function HomePage() {
 
   // Load saved username from localStorage on component mount
   useEffect(() => {
-    const savedName = localStorage.getItem(STORAGE_KEY);
+    const savedName = nameUtils.getStoredName();
     if (savedName) {
       setUserName(savedName);
     }
@@ -35,7 +34,7 @@ export default function HomePage() {
   const handleCreateRoom = () => {
     if (userName.trim()) {
       // Save username to localStorage
-      localStorage.setItem(STORAGE_KEY, userName.trim());
+      nameUtils.saveName(userName.trim());
       const newRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
       navigate(`/room/${newRoomId}?name=${encodeURIComponent(userName.trim())}`);
     }
@@ -44,7 +43,7 @@ export default function HomePage() {
   const handleJoinRoom = () => {
     if (userName.trim() && roomId.trim()) {
       // Save username to localStorage
-      localStorage.setItem(STORAGE_KEY, userName.trim());
+      nameUtils.saveName(userName.trim());
       navigate(`/room/${roomId.trim()}?name=${encodeURIComponent(userName.trim())}`);
     }
   };
@@ -52,7 +51,7 @@ export default function HomePage() {
   const handleQuickCreateRoom = () => {
     if (userName.trim()) {
       // Save username to localStorage
-      localStorage.setItem(STORAGE_KEY, userName.trim());
+      nameUtils.saveName(userName.trim());
       const newRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
       navigate(`/room/${newRoomId}?name=${encodeURIComponent(userName.trim())}`);
     } else {
@@ -70,10 +69,8 @@ export default function HomePage() {
 
   const handleUserNameChange = (value: string) => {
     setUserName(value);
-    // Save to localStorage as user types (debounced would be better, but this works)
-    if (value.trim()) {
-      localStorage.setItem(STORAGE_KEY, value.trim());
-    }
+    // Save to localStorage as user types
+    nameUtils.saveName(value);
   };
   return (
     <Container size="lg" py="xl">
@@ -148,7 +145,7 @@ export default function HomePage() {
                   size="xs"
                   variant="subtle"
                   onClick={() => {
-                    localStorage.removeItem(STORAGE_KEY);
+                    nameUtils.clearName();
                     setUserName('');
                   }}
                 >
