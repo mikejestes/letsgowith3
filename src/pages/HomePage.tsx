@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -15,6 +15,8 @@ import {
 } from '@mantine/core';
 import { Spade, Users, BarChart3 } from 'lucide-react';
 
+const STORAGE_KEY = 'pokervibes-username';
+
 export default function HomePage() {
   const navigate = useNavigate();
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -22,8 +24,18 @@ export default function HomePage() {
   const [userName, setUserName] = useState('');
   const [roomId, setRoomId] = useState('');
 
+  // Load saved username from localStorage on component mount
+  useEffect(() => {
+    const savedName = localStorage.getItem(STORAGE_KEY);
+    if (savedName) {
+      setUserName(savedName);
+    }
+  }, []);
+
   const handleCreateRoom = () => {
     if (userName.trim()) {
+      // Save username to localStorage
+      localStorage.setItem(STORAGE_KEY, userName.trim());
       const newRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
       navigate(`/room/${newRoomId}?name=${encodeURIComponent(userName.trim())}`);
     }
@@ -31,7 +43,36 @@ export default function HomePage() {
 
   const handleJoinRoom = () => {
     if (userName.trim() && roomId.trim()) {
+      // Save username to localStorage
+      localStorage.setItem(STORAGE_KEY, userName.trim());
       navigate(`/room/${roomId.trim()}?name=${encodeURIComponent(userName.trim())}`);
+    }
+  };
+
+  const handleQuickCreateRoom = () => {
+    if (userName.trim()) {
+      // Save username to localStorage
+      localStorage.setItem(STORAGE_KEY, userName.trim());
+      const newRoomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+      navigate(`/room/${newRoomId}?name=${encodeURIComponent(userName.trim())}`);
+    } else {
+      setCreateModalOpen(true);
+    }
+  };
+
+  const handleQuickJoinRoom = () => {
+    if (userName.trim()) {
+      setJoinModalOpen(true);
+    } else {
+      setJoinModalOpen(true);
+    }
+  };
+
+  const handleUserNameChange = (value: string) => {
+    setUserName(value);
+    // Save to localStorage as user types (debounced would be better, but this works)
+    if (value.trim()) {
+      localStorage.setItem(STORAGE_KEY, value.trim());
     }
   };
   return (
@@ -90,12 +131,40 @@ export default function HomePage() {
           </SimpleGrid>
 
           <Group gap="md">
-            <Button size="lg" variant="filled" onClick={() => setCreateModalOpen(true)}>
-              Start a Session
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => setJoinModalOpen(true)}>
-              Join a Session
-            </Button>
+            {userName.trim() ? (
+              <Stack align="center" gap="xs">
+                <Text size="sm" c="dimmed">
+                  Welcome back, <strong>{userName}</strong>!
+                </Text>
+                <Group gap="sm">
+                  <Button size="lg" variant="filled" onClick={handleQuickCreateRoom}>
+                    Start a Session
+                  </Button>
+                  <Button size="lg" variant="outline" onClick={handleQuickJoinRoom}>
+                    Join a Session
+                  </Button>
+                </Group>
+                <Button
+                  size="xs"
+                  variant="subtle"
+                  onClick={() => {
+                    localStorage.removeItem(STORAGE_KEY);
+                    setUserName('');
+                  }}
+                >
+                  Use different name
+                </Button>
+              </Stack>
+            ) : (
+              <>
+                <Button size="lg" variant="filled" onClick={() => setCreateModalOpen(true)}>
+                  Start a Session
+                </Button>
+                <Button size="lg" variant="outline" onClick={() => setJoinModalOpen(true)}>
+                  Join a Session
+                </Button>
+              </>
+            )}
           </Group>
 
           <Text size="sm" c="dimmed">
@@ -128,7 +197,7 @@ export default function HomePage() {
             label="Your Name"
             placeholder="Enter your name"
             value={userName}
-            onChange={(e) => setUserName(e.target.value)}
+            onChange={(e) => handleUserNameChange(e.target.value)}
             required
           />
           <Group justify="flex-end">
@@ -153,7 +222,7 @@ export default function HomePage() {
             label="Your Name"
             placeholder="Enter your name"
             value={userName}
-            onChange={(e) => setUserName(e.target.value)}
+            onChange={(e) => handleUserNameChange(e.target.value)}
             required
           />
           <TextInput
