@@ -13,7 +13,7 @@ import {
   TextInput,
   Modal,
 } from '@mantine/core';
-import { Spade, Users, BarChart3 } from 'lucide-react';
+import { Spade, Users, BarChart3, Rocket } from 'lucide-react';
 import { nameUtils } from '../utils/nameUtils';
 import { generateRoomId } from '../utils/roomNameGenerator';
 
@@ -78,9 +78,12 @@ export default function HomePage() {
       <Center>
         <Stack align="center" gap="xl">
           <div style={{ textAlign: 'center' }}>
-            <Title order={1} size={60} mb="md">
-              � lets go with 3
-            </Title>
+            <Group justify="center" align="center" gap="md" mb="md">
+              <Rocket size={48} color="#228be6" />
+              <Title order={1} size={60}>
+                lets go with 3
+              </Title>
+            </Group>
             <Text size="xl" c="dimmed" mb="xl">
               the very serious engineers pointing poker app
             </Text>
