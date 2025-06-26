@@ -275,12 +275,62 @@ export default function PokerRoomPage() {
                     {currentRound.votesRevealed && Object.keys(voteResults).length > 0 && (
                       <div>
                         <Title order={6} mt="md" mb="xs">Results:</Title>
-                        <Group gap="xs">
-                          {Object.entries(voteResults).map(([value, count]) => (
-                            <Badge key={value} size="lg" variant="filled">
-                              {value}: {count}
-                            </Badge>
-                          ))}
+                        
+                        {/* Summary */}
+                        {(() => {
+                          const sortedResults = Object.entries(voteResults)
+                            .sort(([,a], [,b]) => b - a); // Sort by count descending
+                          const topResult = sortedResults[0];
+                          const totalVotes = Object.values(voteResults).reduce((sum, count) => sum + count, 0);
+                          
+                          return (
+                            <Alert mb="md" color="blue" variant="light">
+                              <Text size="sm">
+                                <strong>Most popular:</strong> {topResult[0]} point{topResult[0] !== '1' ? 's' : ''} 
+                                ({topResult[1]} of {totalVotes} vote{totalVotes !== 1 ? 's' : ''})
+                              </Text>
+                            </Alert>
+                          );
+                        })()}
+                        
+                        <Group gap="md">
+                          {Object.entries(voteResults)
+                            .sort(([a], [b]) => {
+                              // Sort by numeric value, with special handling for non-numeric values
+                              const aNum = parseFloat(a);
+                              const bNum = parseFloat(b);
+                              if (isNaN(aNum) && isNaN(bNum)) return a.localeCompare(b);
+                              if (isNaN(aNum)) return 1;
+                              if (isNaN(bNum)) return -1;
+                              return aNum - bNum;
+                            })
+                            .map(([value, count]) => {
+                              const isTopChoice = count === Math.max(...Object.values(voteResults));
+                              return (
+                                <Card 
+                                  key={value} 
+                                  padding="sm" 
+                                  withBorder
+                                  style={{ 
+                                    backgroundColor: isTopChoice ? 'var(--mantine-color-blue-0)' : undefined,
+                                    borderColor: isTopChoice ? 'var(--mantine-color-blue-4)' : undefined
+                                  }}
+                                >
+                                  <Stack gap="xs" align="center">
+                                    <Badge 
+                                      size="xl" 
+                                      variant="filled" 
+                                      color={isTopChoice ? "blue" : "gray"}
+                                    >
+                                      {value}
+                                    </Badge>
+                                    <Text size="sm" c="dimmed">
+                                      {count} vote{count !== 1 ? 's' : ''}
+                                    </Text>
+                                  </Stack>
+                                </Card>
+                              );
+                            })}
                         </Group>
                       </div>
                     )}
