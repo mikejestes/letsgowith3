@@ -43,13 +43,41 @@ cd pokervibes
 npm install
 ```
 
-3. Start the development server
+3. Set up environment variables
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and configure your WebRTC signaling server:
+
+```env
+VITE_WEBRTC_SIGNALING_URL=ws://localhost:4444
+```
+
+4. Start the development server
 
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+5. Open your browser and navigate to `http://localhost:5173`
+
+## ⚙️ Configuration
+
+The application uses environment variables for configuration. Copy `.env.example` to `.env` and adjust the settings:
+
+### Environment Variables
+
+- `VITE_WEBRTC_SIGNALING_URL` - WebRTC signaling server URL
+  - Local development: `ws://localhost:4444`
+  - Production: Your deployed signaling server URL
+
+For Vercel deployment, set the environment variable in your Vercel dashboard or use the Vercel CLI:
+
+```bash
+vercel env add VITE_WEBRTC_SIGNALING_URL
+```
 
 ## 📜 Available Scripts
 

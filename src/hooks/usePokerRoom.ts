@@ -46,8 +46,9 @@ export function usePokerRoom(roomId: string, userId: string, userName: string) {
 
   // Awareness: track online users and leader consistently
   useEffect(() => {
+    const signalingUrl = import.meta.env.VITE_WEBRTC_SIGNALING_URL || 'ws://localhost:4444';
     const webrtcProvider = new WebrtcProvider(roomId, doc, {
-      signaling: ['ws://localhost:4444'],
+      signaling: [signalingUrl],
       maxConns: 20,
       filterBcConns: true,
       peerOpts: {}
